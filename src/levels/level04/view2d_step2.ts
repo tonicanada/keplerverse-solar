@@ -41,11 +41,15 @@ export function createLevel04Step2View2D() {
   let heightConnector: SvgSelection | null = null;
   let lookArrowPath: SvgSelection | null = null;
 
+  let latitudeZeroPoint: SvgSelection | null = null;
+  let earthArrow: SvgSelection | null = null;
+
   const earthOrbitPoints = circularOrbitPoints(EARTH_ORBIT_RADIUS);
   const moonOrbitPoints = circularOrbitPoints(MOON_ORBIT_RADIUS);
 
   type OrbitPoint = { x: number; z: number };
-  const closedLine = d3.line()
+  const closedLine = d3
+    .line()
     .x((p: OrbitPoint) => p.x * SCALE)
     .y((p: OrbitPoint) => p.z * SCALE)
     .curve(d3.curveLinearClosed);
@@ -59,7 +63,8 @@ export function createLevel04Step2View2D() {
     panelSize = Math.min(width, (availableHeight - PANEL_GAP) / 2);
     const actualHeight = panelSize * 2 + PANEL_GAP;
 
-    svg = d3.select(container)
+    svg = d3
+      .select(container)
       .append("svg")
       .attr("width", width)
       .attr("height", actualHeight);
@@ -68,20 +73,26 @@ export function createLevel04Step2View2D() {
     const topCenterY = panelSize / 2;
     const bottomCenterY = panelSize + PANEL_GAP + panelSize / 2;
 
-    const overviewScale = Math.min(1, (panelSize * OVERVIEW_PADDING) / (EARTH_ORBIT_RADIUS * 2 * SCALE));
+    const overviewScale = Math.min(
+      1,
+      (panelSize * OVERVIEW_PADDING) / (EARTH_ORBIT_RADIUS * 2 * SCALE)
+    );
     detailScale = (panelSize * DETAIL_SCALE_RATIO) / (MOON_RADIUS * 2);
 
-    const detailPanel = svg.append("g")
+    const detailPanel = svg
+      .append("g")
       .attr("transform", `translate(${centerX},${topCenterY})`);
 
-    detailPanel.append("rect")
+    detailPanel
+      .append("rect")
       .attr("x", -panelSize / 2)
       .attr("y", -panelSize / 2)
       .attr("width", panelSize)
       .attr("height", panelSize)
       .attr("fill", "none");
 
-    detailPanel.append("text")
+    detailPanel
+      .append("text")
       .attr("x", -panelSize / 2 + 12)
       .attr("y", -panelSize / 2 + 20)
       .attr("fill", "#999")
@@ -89,74 +100,94 @@ export function createLevel04Step2View2D() {
       .attr("font-family", "system-ui, sans-serif")
       .text("Moon surface · zoom");
 
-    detailRoot = detailPanel.append("g")
+    detailRoot = detailPanel
+      .append("g")
       .attr("transform", `scale(${detailScale})`);
 
-    moonDetailCircle = detailRoot.append("circle")
+    moonDetailCircle = detailRoot
+      .append("circle")
       .attr("fill", "#333")
       .attr("stroke", "#888")
       .attr("stroke-width", 1)
       .attr("vector-effect", "non-scaling-stroke");
 
-    heightConnector = detailRoot.append("line")
+    heightConnector = detailRoot
+      .append("line")
       .attr("stroke", "#ffaa33")
       .attr("stroke-width", HEIGHT_ARROW_WIDTH_PX)
       .attr("vector-effect", "non-scaling-stroke");
 
-    observerMarker = detailRoot.append("circle")
+    observerMarker = detailRoot
+      .append("circle")
       .attr("fill", "#ffaa33")
       .attr("r", OBSERVER_MARKER_RADIUS);
 
-    cameraMarker = detailRoot.append("circle")
+    cameraMarker = detailRoot
+      .append("circle")
       .attr("fill", "#ffd54a")
       .attr("r", CAMERA_MARKER_RADIUS);
 
-    lookArrowPath = detailRoot.append("path")
+    lookArrowPath = detailRoot
+      .append("path")
       .attr("fill", "#ffaa33")
       .attr("stroke", "none");
 
-    const overviewPanel = svg.append("g")
+    latitudeZeroPoint = detailRoot
+      .append("circle")
+      .attr("r", 0.01)
+      .attr("fill", "#ffffff");
+
+    // 🔴 Flecha delgada hacia la Tierra (PASO 4)
+    earthArrow = detailRoot
+      .append("path")
+      .attr("fill", "#ffffff")
+      .attr("opacity", 0.85);
+
+    const overviewPanel = svg
+      .append("g")
       .attr("transform", `translate(${centerX},${bottomCenterY})`);
 
-    overviewPanel.append("rect")
+    overviewPanel
+      .append("rect")
       .attr("x", -panelSize / 2)
       .attr("y", -panelSize / 2)
       .attr("width", panelSize)
       .attr("height", panelSize)
       .attr("fill", "none");
 
-    overviewLabel = overviewPanel.append("text")
+    overviewLabel = overviewPanel
+      .append("text")
       .attr("x", -panelSize / 2 + 12)
       .attr("y", -panelSize / 2 + 20)
       .attr("fill", "#bbb")
       .attr("font-size", 12)
       .attr("font-family", "system-ui, sans-serif");
 
-    overviewRoot = overviewPanel.append("g")
+    overviewRoot = overviewPanel
+      .append("g")
       .attr("transform", `scale(${overviewScale})`);
 
-    overviewRoot.append("path")
+    overviewRoot
+      .append("path")
       .attr("d", closedLine(earthOrbitPoints))
       .attr("fill", "none")
       .attr("stroke", "#2266ff")
       .attr("stroke-width", 1.25);
 
     moonOrbitGroup = overviewRoot.append("g");
-    moonOrbitGroup.append("path")
+    moonOrbitGroup
+      .append("path")
       .attr("d", closedLine(moonOrbitPoints))
       .attr("fill", "none")
       .attr("stroke", "#aaaaaa")
       .attr("stroke-width", 1);
 
-    sun = overviewRoot.append("circle")
-      .attr("r", 6)
-      .attr("fill", "#ffd54a");
+    sun = overviewRoot.append("circle").attr("r", 6).attr("fill", "#ffd54a");
 
-    earth = overviewRoot.append("circle")
-      .attr("r", 4)
-      .attr("fill", "#4aa3ff");
+    earth = overviewRoot.append("circle").attr("r", 4).attr("fill", "#4aa3ff");
 
-    moonMarker = overviewRoot.append("circle")
+    moonMarker = overviewRoot
+      .append("circle")
       .attr("r", 4)
       .attr("fill", "#bbbbbb");
   }
@@ -178,16 +209,22 @@ export function createLevel04Step2View2D() {
     earth?.attr("cx", earthX).attr("cy", earthY);
     moonMarker?.attr("cx", moonX).attr("cy", moonY);
 
-    moonOrbitGroup
-      ?.attr("transform", `translate(${earthX},${earthY})`);
+    moonOrbitGroup?.attr("transform", `translate(${earthX},${earthY})`);
 
     const toEarthFromMoon = state.earthPos.clone().sub(state.moonPos);
-    const toEarthDir = safeNormalize(toEarthFromMoon.clone(), new THREE.Vector3(1, 0, 0));
+    const toEarthDir = safeNormalize(
+      toEarthFromMoon.clone(),
+      new THREE.Vector3(1, 0, 0)
+    );
 
-    const east = safeNormalize(WORLD_UP.clone().cross(toEarthDir), new THREE.Vector3(0, 0, 1));
+    const east = safeNormalize(
+      WORLD_UP.clone().cross(toEarthDir),
+      new THREE.Vector3(0, 0, 1)
+    );
     const lon = THREE.MathUtils.degToRad(params.longitudeDeg);
 
-    const observerLocal = toEarthDir.clone()
+    const observerLocal = toEarthDir
+      .clone()
       .multiplyScalar(Math.cos(lon))
       .addScaledVector(east, Math.sin(lon))
       .multiplyScalar(MOON_RADIUS);
@@ -195,10 +232,18 @@ export function createLevel04Step2View2D() {
     const observerWorld = state.moonPos.clone().add(observerLocal);
     const up = safeNormalize(observerLocal.clone(), new THREE.Vector3(1, 0, 0));
 
-    const cameraPos = observerWorld.clone().addScaledVector(up, params.eyeHeight);
+    const cameraPos = observerWorld
+      .clone()
+      .addScaledVector(up, params.eyeHeight);
 
-    const toEarth = safeNormalize(state.earthPos.clone().sub(cameraPos), toEarthDir.clone());
-    const toSun = safeNormalize(state.sunPos.clone().sub(cameraPos), new THREE.Vector3(-1, 0, 0));
+    const toEarth = safeNormalize(
+      state.earthPos.clone().sub(cameraPos),
+      toEarthDir.clone()
+    );
+    const toSun = safeNormalize(
+      state.sunPos.clone().sub(cameraPos),
+      new THREE.Vector3(-1, 0, 0)
+    );
 
     const lookDir = new THREE.Vector3();
     if (params.lookAt === "Earth") {
@@ -208,7 +253,8 @@ export function createLevel04Step2View2D() {
     } else if (params.lookAt === "Zenith") {
       lookDir.copy(up);
     } else {
-      lookDir.copy(east)
+      lookDir
+        .copy(east)
         .multiplyScalar(1 - params.earthBias)
         .addScaledVector(toEarth, params.earthBias)
         .normalize();
@@ -221,13 +267,9 @@ export function createLevel04Step2View2D() {
     const cameraRadius = MOON_RADIUS + params.eyeHeight;
     const cameraPoint = { x: up.x * cameraRadius, y: up.z * cameraRadius };
 
-    observerMarker
-      ?.attr("cx", observerPoint.x)
-      .attr("cy", observerPoint.y);
+    observerMarker?.attr("cx", observerPoint.x).attr("cy", observerPoint.y);
 
-    cameraMarker
-      ?.attr("cx", cameraPoint.x)
-      .attr("cy", cameraPoint.y);
+    cameraMarker?.attr("cx", cameraPoint.x).attr("cy", cameraPoint.y);
 
     heightConnector
       ?.attr("x1", observerPoint.x)
@@ -264,8 +306,57 @@ export function createLevel04Step2View2D() {
       y: baseCenter.y - perp.y * arrowHalfWidth,
     };
 
-    lookArrowPath
-      ?.attr("d", `M ${left.x} ${left.y} L ${right.x} ${right.y} L ${tip.x} ${tip.y} Z`);
+    const earthSurfacePoint = toEarthDir.clone().multiplyScalar(MOON_RADIUS);
+
+    latitudeZeroPoint?.attr("cx", earthSurfacePoint.x).attr("cy", earthSurfacePoint.z);
+
+    // --------------------------------------------------
+    // Flecha fina desde el punto sub-Tierra hacia la Tierra
+    // --------------------------------------------------
+
+    const ARROW_LENGTH = 0.05; // corta
+    const ARROW_HALF_WIDTH = 0.006; // muy fina
+
+    // Dirección 2D (plano XZ)
+    const earthDir2D = {
+      x: toEarthDir.x,
+      y: toEarthDir.z,
+    };
+
+    // Punta de la flecha
+    const earthTip = {
+      x: earthSurfacePoint.x + earthDir2D.x * ARROW_LENGTH,
+      y: earthSurfacePoint.z + earthDir2D.y * ARROW_LENGTH,
+    };
+
+    // Perpendicular en el plano
+    const earthPerp = {
+      x: -earthDir2D.y,
+      y: earthDir2D.x,
+    };
+
+    // Base de la flecha (dos puntos)
+    const earthLeft = {
+      x: earthSurfacePoint.x + earthPerp.x * ARROW_HALF_WIDTH,
+      y: earthSurfacePoint.z + earthPerp.y * ARROW_HALF_WIDTH,
+    };
+
+    const earthRight = {
+      x: earthSurfacePoint.x - earthPerp.x * ARROW_HALF_WIDTH,
+      y: earthSurfacePoint.z - earthPerp.y * ARROW_HALF_WIDTH,
+    };
+
+    earthArrow?.attr(
+      "d",
+      `M ${earthLeft.x} ${earthLeft.y}
+   L ${earthRight.x} ${earthRight.y}
+   L ${earthTip.x} ${earthTip.y} Z`
+    );
+
+    lookArrowPath?.attr(
+      "d",
+      `M ${left.x} ${left.y} L ${right.x} ${right.y} L ${tip.x} ${tip.y} Z`
+    );
 
     overviewLabel?.text("Level 04 · Step 2 (Sun frame)");
   }
@@ -285,6 +376,7 @@ export function createLevel04Step2View2D() {
     cameraMarker = null;
     heightConnector = null;
     lookArrowPath = null;
+    earthArrow = null
   }
 
   return { mount, update, dispose };

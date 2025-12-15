@@ -4,16 +4,23 @@ import GUI from "lil-gui";
 
 import { createRenderer, resizeToDisplaySize } from "./core/renderer";
 import { SimClock } from "./core/time";
-import type { SceneModule } from "./scenes/Scene";
+import type { SceneModule } from "./levels/Scene";
 
-import { level01_sun_earth } from "./scenes/level01_sun_earth";
-import { level02_reference_frames } from "./scenes/level02_reference_frames";
-import { level03_sun_earth_moon } from "./scenes/level03_sun_earth_moon";
-import { level04_lunar_surface_step1 } from "./scenes/level04_lunar_surface_step1";
-import { level04_lunar_surface_step2 } from "./scenes/level04_lunar_surface_step2";
+import { level01_sun_earth } from "./levels/level01/scene";
+import { level02_reference_frames } from "./levels/level02/scene";
+import { level03_sun_earth_moon } from "./levels/level03/scene";
+import { level04_lunar_surface_step1 } from "./levels/level04/scene_step1";
+import { level04_lunar_surface_step2 } from "./levels/level04/scene_step2";
+import { createLevel02_2D } from "./levels/level02/view2d";
+import { createLevel03View2D } from "./levels/level03/view2d";
+import { createLevel04Step1View2D } from "./levels/level04/view2d_step1";
+import { createLevel04Step2View2D } from "./levels/level04/view2d_step2";
 
-// 2D overlay (Level 02)
-import { createLevel02_2D } from "./d3/level02_2d";
+type OverlayView = {
+  mount(container: HTMLElement): void;
+  update(simTimeSeconds: number): void;
+  dispose(): void;
+};
 
 // =====================================================
 // Canvas & Renderer
@@ -41,8 +48,29 @@ const camera = new THREE.PerspectiveCamera(60, 2, 0.01, 1e6);
 const panel2D = document.getElementById("panel-2d")!;
 panel2D.style.display = "none";
 
-const level02_2d = createLevel02_2D();
-let level02_2d_active = false;
+const overlays = new Map<string, OverlayView>([
+  ["Level 02 · Reference Frames", createLevel02_2D()],
+  ["Level 03 · Orbits & Epicycles", createLevel03View2D()],
+  ["Level 04 · Lunar Surface (Step 1)", createLevel04Step1View2D()],
+  ["Level 04 · Lunar Surface (Step 2)", createLevel04Step2View2D()],
+]);
+
+let activeOverlay: OverlayView | null = null;
+
+function detachOverlay() {
+  if (!activeOverlay) return;
+  activeOverlay.dispose();
+  activeOverlay = null;
+  panel2D.style.display = "none";
+}
+
+function attachOverlay(sceneName: string) {
+  const overlay = overlays.get(sceneName);
+  if (!overlay) return;
+  panel2D.style.display = "block";
+  overlay.mount(panel2D);
+  activeOverlay = overlay;
+}
 
 // =====================================================
 // Simulation Clock
@@ -64,6 +92,7 @@ const scenes: SceneModule[] = [
 
 let active = scenes[0];
 active.init({ renderer, camera, scene, canvas });
+attachOverlay(active.name);
 
 // =====================================================
 // GUI — Time controls
@@ -84,14 +113,18 @@ clock.reverse = timeControls.reverse;
 clock.speed = timeControls.yearsPerSecond * SECONDS_PER_YEAR;
 
 gui.add(timeControls, "paused").name("Pause")
-  .onChange(v => (clock.paused = v));
+  .onChange((v: boolean) => {
+    clock.paused = v;
+  });
 
 gui.add(timeControls, "reverse").name("Reverse")
-  .onChange(v => (clock.reverse = v));
+  .onChange((v: boolean) => {
+    clock.reverse = v;
+  });
 
 gui.add(timeControls, "yearsPerSecond", 0, 1, 0.001)
   .name("Years / second")
-  .onChange(v => {
+  .onChange((v: number) => {
     clock.speed = v * SECONDS_PER_YEAR;
   });
 
@@ -106,11 +139,7 @@ gui
   .name("Level")
   .onChange((name: string) => {
     // limpiar 2D
-    if (level02_2d_active) {
-      level02_2d.dispose();
-      panel2D.style.display = "none";
-      level02_2d_active = false;
-    }
+    detachOverlay();
 
     // limpiar escena 3D
     active.dispose();
@@ -122,12 +151,7 @@ gui
     active = scenes.find(s => s.name === name)!;
     active.init({ renderer, camera, scene, canvas });
 
-    // activar panel 2D solo en Level 02
-    if (active.name.startsWith("Level 02")) {
-      panel2D.style.display = "block";
-      level02_2d.mount(panel2D);
-      level02_2d_active = true;
-    }
+    attachOverlay(active.name);
   });
 
 // =====================================================
@@ -146,9 +170,7 @@ function animate(now: number) {
 
   active.update(realDt, clock.simTimeSeconds);
 
-  if (level02_2d_active) {
-    level02_2d.update(clock.simTimeSeconds);
-  }
+  activeOverlay?.update(clock.simTimeSeconds);
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

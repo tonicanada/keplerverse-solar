@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
-import type { SceneContext, SceneModule } from "./Scene";
+import type { SceneContext, SceneModule } from "../Scene";
+import type { Level04Step2LookAt, Level04Step2State } from "./state_step2";
+import { level04Step2Store } from "./state_step2";
 
 /**
  * LEVEL 04 — Lunar Surface (Step 2)
@@ -39,22 +41,7 @@ export function level04_lunar_surface_step2(): SceneModule {
   const MOON_RADIUS = 0.15;
 
   // ✅ Defaults como tu captura
-  const params = {
-    lookAt: "Horizon" as "Horizon" | "Earth" | "Sun" | "Zenith",
-
-    // Cámara / suelo
-    eyeHeight: 0.001,
-    groundSize: 200,
-
-    // Cámara: levantar un poco sobre el horizonte
-    tiltUp: 0.12,
-
-    // “Horizon” incluye Tierra mezclando direcciones
-    earthBias: 0.68,
-
-    // Posición del observador sobre la Luna
-    longitudeDeg: 94,
-  };
+  const params: Level04Step2State = { ...level04Step2Store.get() };
 
   // Vectores reutilizados
   const sunPos = new THREE.Vector3();
@@ -146,11 +133,23 @@ export function level04_lunar_surface_step2(): SceneModule {
 
       // GUI (con defaults ya fijados)
       gui = new GUI({ title: "Lunar Surface · Step 2" });
-      gui.add(params, "lookAt", ["Horizon", "Earth", "Sun", "Zenith"]).name("Look at");
-      gui.add(params, "tiltUp", 0, 0.8, 0.01).name("Tilt up");
-      gui.add(params, "earthBias", 0, 1, 0.01).name("Earth bias");
-      gui.add(params, "eyeHeight", 0.0, 0.2, 0.001).name("Eye height");
-      gui.add(params, "longitudeDeg", 0, 360, 1).name("Longitude °");
+      gui.add(params, "lookAt", ["Horizon", "Earth", "Sun", "Zenith"])
+        .name("Look at")
+        .onChange((value: Level04Step2LookAt) => level04Step2Store.set({ lookAt: value }));
+      gui.add(params, "tiltUp", 0, 0.8, 0.01)
+        .name("Tilt up")
+        .onChange((value: number) => level04Step2Store.set({ tiltUp: value }));
+      gui.add(params, "earthBias", 0, 1, 0.01)
+        .name("Earth bias")
+        .onChange((value: number) => level04Step2Store.set({ earthBias: value }));
+      gui.add(params, "eyeHeight", 0.0, 0.2, 0.001)
+        .name("Eye height")
+        .onChange((value: number) => level04Step2Store.set({ eyeHeight: value }));
+      gui.add(params, "longitudeDeg", 0, 360, 1)
+        .name("Longitude °")
+        .onChange((value: number) => level04Step2Store.set({ longitudeDeg: value }));
+
+      level04Step2Store.set(params);
 
       camera.position.set(0, 5, 15);
       camera.lookAt(0, 0, 0);

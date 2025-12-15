@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { SceneContext, SceneModule } from "./Scene";
+import type { SceneContext, SceneModule } from "../Scene";
 
 /**
  * LEVEL 01 — Sun + Earth

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import GUI from "lil-gui";
-import type { SceneContext, SceneModule } from "./Scene";
+import type { SceneContext, SceneModule } from "../Scene";
 
 /**
  * LEVEL 04 — Lunar Surface (Step 1)
@@ -26,14 +26,6 @@ export function level04_lunar_surface_step1(): SceneModule {
   let moon!: THREE.Mesh;
 
   let gui: GUI | null = null;
-
-  // =====================================================
-  // Parámetros
-  // =====================================================
-
-  const params = {
-    observer: "MoonSurface" as "MoonSurface",
-  };
 
   // =====================================================
   // Constantes físicas (escaladas)

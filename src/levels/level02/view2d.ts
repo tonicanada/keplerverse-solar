@@ -1,4 +1,7 @@
 import * as d3 from "d3";
+import type { Observer } from "./model";
+import { EARTH_ORBIT_RADIUS, referenceFrameState } from "./model";
+import { level02Store } from "./state";
 
 /**
  * Level 02 — 2D view
@@ -9,17 +12,22 @@ import * as d3 from "d3";
  * Se monta dentro de un contenedor rectangular (panel).
  */
 export function createLevel02_2D() {
-  let svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
-  let g: d3.Selection<SVGGElement, unknown, null, undefined>;
-  let earth: d3.Selection<SVGCircleElement, unknown, null, undefined>;
-  let vector: d3.Selection<SVGLineElement, unknown, null, undefined>;
+  let svg: any;
+  let g: any;
+  let sun: any;
+  let earth: any;
+  let vector: any;
+  let label: any;
 
   // Escala visual
   const SCALE = 18;
 
-  // Parámetros físicos (idénticos al 3D)
-  const EARTH_ORBIT_RADIUS = 10;
-  const EARTH_ORBIT_PERIOD = 365 * 24 * 3600; // segundos
+  let observer: Observer = level02Store.get().observer;
+  let unsubscribe: (() => void) | null = null;
+
+  unsubscribe = level02Store.subscribe(state => {
+    observer = state.observer;
+  });
 
   function mount(container: HTMLElement) {
     const { width, height } = container.getBoundingClientRect();
@@ -49,7 +57,7 @@ export function createLevel02_2D() {
       .attr("stroke-width", 1.5);
 
     // Sol
-    g.append("circle")
+    sun = g.append("circle")
       .attr("r", 6)
       .attr("fill", "#ffd54a");
 
@@ -64,8 +72,8 @@ export function createLevel02_2D() {
       .attr("stroke-width", 1);
 
     // Etiqueta
-    g.append("text")
-      .text("Level 02 · 2D (heliocentric)")
+    label = g.append("text")
+      .text("Level 02 · 2D")
       .attr("x", -width / 2 + 12)
       .attr("y", -height / 2 + 20)
       .attr("fill", "#bbb")
@@ -74,25 +82,34 @@ export function createLevel02_2D() {
   }
 
   function update(simTimeSeconds: number) {
-    const theta =
-      (2 * Math.PI * simTimeSeconds) / EARTH_ORBIT_PERIOD;
+    const frame = referenceFrameState(simTimeSeconds, observer);
+    const sunPos = frame.sunPos;
+    const earthPos = frame.earthPos;
 
-    const x = EARTH_ORBIT_RADIUS * Math.cos(theta);
-    const y = EARTH_ORBIT_RADIUS * Math.sin(theta);
+    const sunX = sunPos.x * SCALE;
+    const sunY = sunPos.z * SCALE;
+    const earthX = earthPos.x * SCALE;
+    const earthY = earthPos.z * SCALE;
 
-    earth
-      .attr("cx", x * SCALE)
-      .attr("cy", y * SCALE);
+    sun?.attr("cx", sunX).attr("cy", sunY);
+    earth?.attr("cx", earthX).attr("cy", earthY);
+
+    const origin = observer === "Sun" ? sunPos : earthPos;
+    const target = observer === "Sun" ? earthPos : sunPos;
 
     vector
-      .attr("x1", 0)
-      .attr("y1", 0)
-      .attr("x2", x * SCALE)
-      .attr("y2", y * SCALE);
+      .attr("x1", origin.x * SCALE)
+      .attr("y1", origin.z * SCALE)
+      .attr("x2", target.x * SCALE)
+      .attr("y2", target.z * SCALE);
+
+    label?.text(`Level 02 · 2D (${observer} frame)`);
   }
 
   function dispose() {
     svg?.remove();
+    unsubscribe?.();
+    unsubscribe = null;
   }
 
   return { mount, update, dispose };
